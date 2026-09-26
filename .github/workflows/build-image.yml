@@ -47,6 +47,10 @@ jobs:
           ref: main
           fetch-depth: 0
 
+      - name: 小写仓库名（docker tag 不允许大写）
+        id: repo
+        run: echo "lc=$(echo '${{ github.repository }}' | tr 'A-Z' 'a-z')" >> "$GITHUB_OUTPUT"
+
       - name: 同步上游 main
         id: sync
         run: |
@@ -98,9 +102,9 @@ jobs:
           [ -n "$TAG" ] || TAG="${{ steps.sync.outputs.version }}"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           if [ "${{ github.event.inputs.force }}" != "true" ] \
-             && docker buildx imagetools inspect "ghcr.io/${{ github.repository }}:$TAG" >/dev/null 2>&1; then
+             && docker buildx imagetools inspect "ghcr.io/${{ steps.repo.outputs.lc }}:$TAG" >/dev/null 2>&1; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
-            echo "ghcr.io/${{ github.repository }}:$TAG 已存在，跳过构建"
+            echo "ghcr.io/${{ steps.repo.outputs.lc }}:$TAG 已存在，跳过构建"
           else
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
@@ -116,8 +120,8 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}:${{ steps.check.outputs.tag }}
-            ghcr.io/${{ github.repository }}:main-${{ steps.sync.outputs.sha }}
+            ghcr.io/${{ steps.repo.outputs.lc }}:${{ steps.check.outputs.tag }}
+            ghcr.io/${{ steps.repo.outputs.lc }}:main-${{ steps.sync.outputs.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -127,7 +131,7 @@ jobs:
             echo "### 镜像"
             echo ""
             echo '```'
-            echo "docker pull ghcr.io/${{ github.repository }}:${{ steps.check.outputs.tag }}"
+            echo "docker pull ghcr.io/${{ steps.repo.outputs.lc }}:${{ steps.check.outputs.tag }}"
             echo '```'
             echo ""
             echo "NAS 上把 compose 里的 image 换成上面这个即可（记得 vt-init 那个服务一起换）。"
