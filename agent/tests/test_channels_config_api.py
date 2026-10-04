@@ -1352,3 +1352,13 @@ def test_email_test_normalizes_blank_nullable_fields_without_persisting(tmp_path
     assert response.status_code == 200 and response.json()["ok"] is False
     assert response.json()["code"] == "invalid_credentials" and seen == [None]
     assert response.json()["detail"].startswith("validation_error:")
+
+
+def test_email_authentication_trust_anchor_is_editable_in_generic_form(tmp_path, monkeypatch):
+    client, path = _client(tmp_path, monkeypatch, channels={"email": _email_section()})
+    entry = client.get("/channels/config").json()["channels"]["email"]
+    field = next(field for field in entry["fields"] if field["key"] == "trusted_authserv_id")
+    assert field["help_key"] == "settings.channels.fields.email.trusted_authserv_id"
+    response = client.put("/channels/config/email", json={"config": {"trusted_authserv_id": "mx.example.test"}})
+    assert response.status_code == 200
+    assert json.loads(path.read_text())["channels"]["email"]["trusted_authserv_id"] == "mx.example.test"

@@ -464,6 +464,11 @@ export const api = {
   listScheduledRuns: (signal?: AbortSignal) => request<ScheduledRun[]>("/scheduled-runs", { signal }),
   createScheduledRun: (body: CreateScheduledRunRequest) =>
     request<ScheduledRun>("/scheduled-runs", { method: "POST", body: JSON.stringify(body) }),
+  updateScheduledRun: (id: string, body: UpdateScheduledRunRequest) =>
+    request<ScheduledRun>(`/scheduled-runs/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
   deleteScheduledRun: (id: string) =>
     request<void>(`/scheduled-runs/${encodeURIComponent(id)}`, { method: "DELETE" }),
   commitScheduledResearchProposal: (proposalId: string) =>
@@ -684,6 +689,7 @@ export interface ScheduledRun {
   // app, which is what every monitor created before this did.
   delivery_channel: string | null;
   delivery_target: string | null;
+  delivery_format: "html" | "pdf" | null;
   delivery_target_ref: string | null;
   delivery_target_label: string | null;
   delivery_status: string;
@@ -706,7 +712,21 @@ export interface CreateScheduledRunRequest {
   config?: Record<string, unknown>;
   delivery_channel?: string | null;
   delivery_target?: string | null;
+  delivery_format?: "html" | "pdf" | null;
   delivery_target_ref?: string | null;
+}
+
+export interface UpdateScheduledRunRequest {
+  title?: string | null;
+  prompt?: string;
+  schedule?: string;
+  timezone?: string | null;
+  end_at?: number | null;
+  config?: Record<string, unknown> | null;
+  delivery_channel?: string | null;
+  delivery_target?: string | null;
+  delivery_target_ref?: string | null;
+  delivery_format?: "html" | "pdf" | null;
 }
 
 export interface ScheduledResearchProposalJob {
@@ -724,6 +744,7 @@ export interface ScheduledResearchProposalJob {
     channel: string | null;
     target_ref: string | null;
     target_label: string | null;
+    format?: "html" | "pdf" | null;
     status: string;
   };
 }
@@ -852,6 +873,12 @@ export interface UpdateDataSourceSettingsRequest {
   source_orders?: SourceOrderUpdate[];
 }
 
+export interface DeliveryTargetSuggestion {
+  target: string;
+  kind?: string;
+  label?: string;
+}
+
 export interface ChannelAdapterStatus {
   name: string;
   display_name: string;
@@ -862,6 +889,11 @@ export interface ChannelAdapterStatus {
   running: boolean;
   error?: string;
   install_hint?: string;
+  delivery_target_label?: string;
+  delivery_target_kind?: string;
+  delivery_target_placeholder?: string;
+  delivery_target_input_type?: string;
+  delivery_target_suggestions?: DeliveryTargetSuggestion[];
 }
 
 export interface ChannelRuntimeStatus {

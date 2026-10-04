@@ -205,6 +205,10 @@ class ChannelRuntime:
                 schedule = job.get("schedule") or {}
                 delivery = job.get("delivery") or {}
                 action = "create" if proposal.get("operation") == "create" else "cancel"
+                email_format = ""
+                if delivery.get("channel") == "email":
+                    label = {"html": "HTML", "pdf": "PDF"}.get(delivery.get("format"), "plain text")
+                    email_format = f"Email format: {label}\n"
                 reply_content = (
                     f"{reply_content}\n\n"
                     f"[Scheduled research confirmation · {action}]\n"
@@ -212,6 +216,7 @@ class ChannelRuntime:
                     f"Schedule: {schedule.get('expression') or '-'} · "
                     f"{schedule.get('timezone') or 'UTC'}\n"
                     f"Delivery: {delivery.get('target_label') or 'in-app only'}\n"
+                    f"{email_format}"
                     'Reply exactly "confirm" (确认) to commit, or "cancel" (取消) '
                     "to discard."
                 )
