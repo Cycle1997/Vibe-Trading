@@ -198,6 +198,12 @@ class _ReleaseMixin:
         lines.extend(
             f"- {issue.get('message', issue.get('code', 'grounding error'))}" for issue in others
         )
+        omitted = len(validation.issues) - 24
+        if omitted > 0:
+            lines.append(
+                f"{omitted} additional findings are not shown in this bounded feedback. "
+                "Do not assume unlisted figures passed; check their declarations and evidence too."
+            )
         if figures:
             lines.extend(
                 [
@@ -215,6 +221,20 @@ class _ReleaseMixin:
                     + ", ".join(repeated)
                     + ". Take option (2) or (3) for them."
                 )
+        passed = list(validation.passed_figures)
+        if passed:
+            shown = passed[:24]
+            keep = ", ".join(shown)
+            if len(passed) > len(shown):
+                keep += f", and {len(passed) - len(shown)} more"
+            lines.extend(
+                [
+                    "These measured figures in the draft checked clean. Keep these "
+                    "values exactly as written, where they stand: " + keep + ".",
+                    "Cutting them or swapping whole sections for qualitative prose is not "
+                    "a fix; repair the rejected claims while preserving the clean figures.",
+                ]
+            )
         lines.extend(
             [
                 "End the answer with a ```figures``` block declaring every number that "
