@@ -35,7 +35,17 @@ def infer_market(code: str) -> str:
     """
     code_upper = code.strip().upper()
     crypto_suffixes = ("USDT", "BTC", "ETH", "BNB", "SOL", "ADA", "DOGE")
-    if any(code_upper.endswith(s) for s in crypto_suffixes) or "/" in code:
+    if (
+        "/" in code_upper
+        or any(
+            code_upper.endswith("-" + quote)
+            for quote in (*crypto_suffixes, "USD", "USDC")
+        )
+        or re.fullmatch(
+            r"(?:[A-Z0-9]{2,}(?:USDT|USDC|BTC|ETH|BNB|SOL|ADA|DOGE)|(?:BTC|ETH|BNB|SOL|ADA|DOGE)USD)",
+            code_upper,
+        )
+    ):
         return "crypto"
     if code_upper.endswith(".HK"):
         return "hk_equity"
@@ -164,7 +174,7 @@ def _rolling_correlation_matrix(
         # Normalize to date-only (midnight) so that cross-market assets
         # (e.g. crypto via OKX/CCXT at UTC midnight vs US equity via
         # yfinance at EDT midnight = 04:00 UTC) align correctly.
-        ts.index = ts.index.normalize()
+        ts.index = ts.index.tz_localize(None).normalize()
         # ``fill_method=None`` is explicit because under the project's
         # pandas>=2,<3 pin the ``pct_change`` default forward-fills missing
         # prices, silently manufacturing 0% returns on halted sessions.
